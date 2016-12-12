@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">MQTT_Car</string>
+    <integer name="max_speed">100</integer>
+    <integer name="min_speed">-100</integer>
+    <string name="default_addr">tdxls-iot.xicp.net</string>
+    <string name="default_port">1883</string>
+    <string name="mqtt_client_id">iotcar</string>
+</resources>
