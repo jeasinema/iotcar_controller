@@ -5,4 +5,8 @@
     <string name="default_addr">tdxls-iot.xicp.net</string>
     <string name="default_port">1883</string>
     <string name="mqtt_client_id">iotcar</string>
+    <string name="color_topic">/iot-car/icenter/colorx</string>
+    <string name="motor_topic">/control/iot-car/123</string>
+    <string name="connected_status">connected</string>
+    <string name="disconnected_status">disconnected</string>
 </resources>
