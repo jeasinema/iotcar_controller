@@ -3,6 +3,7 @@ package org.icenter.mqtt_car;
 import android.content.Intent;
 import android.net.Uri;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v4.view.ViewCompat;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -144,7 +145,6 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 if (Misc.check_speed_valid(Integer.parseInt(motor1_speed.getText().toString()))) {
-                    motor1 = Integer.parseInt(motor1_speed.getText().toString());
                     do_motor_ctl(_client);
                 }
             }
@@ -154,7 +154,6 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 if (Misc.check_speed_valid(Integer.parseInt(motor2_speed.getText().toString()))) {
-                    motor2 = Integer.parseInt(motor2_speed.getText().toString());
                     do_motor_ctl(_client);
                 }
             }
@@ -164,7 +163,6 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 if (Misc.check_speed_valid(Integer.parseInt(motor3_speed.getText().toString()))) {
-                    motor3 = Integer.parseInt(motor3_speed.getText().toString());
                     do_motor_ctl(_client);
                 }
             }
@@ -174,7 +172,6 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 if (Misc.check_speed_valid(Integer.parseInt(motor4_speed.getText().toString()))) {
-                    motor4 = Integer.parseInt(motor4_speed.getText().toString());
                     do_motor_ctl(_client);
                 }
             }
@@ -184,7 +181,6 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 if (Misc.check_speed_valid(Integer.parseInt(motor5_speed.getText().toString()))) {
-                    motor5 = Integer.parseInt(motor5_speed.getText().toString());
                     do_motor_ctl(_client);
                 }
             }
@@ -194,7 +190,6 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 if (Misc.check_speed_valid(Integer.parseInt(motor6_speed.getText().toString()))) {
-                    motor6 = Integer.parseInt(motor6_speed.getText().toString());
                     do_motor_ctl(_client);
                 }
             }
@@ -301,6 +296,24 @@ public class MainActivity extends AppCompatActivity {
 
     public void do_motor_ctl(MqttAndroidClient client) {
         String ctl_msg;
+        if (Misc.check_speed_valid(Integer.parseInt(motor1_speed.getText().toString()))) {
+            motor1 = Integer.parseInt(motor1_speed.getText().toString());
+        }
+        if (Misc.check_speed_valid(Integer.parseInt(motor2_speed.getText().toString()))) {
+            motor2 = Integer.parseInt(motor2_speed.getText().toString());
+        }
+        if (Misc.check_speed_valid(Integer.parseInt(motor3_speed.getText().toString()))) {
+            motor3 = Integer.parseInt(motor3_speed.getText().toString());
+        }
+        if (Misc.check_speed_valid(Integer.parseInt(motor4_speed.getText().toString()))) {
+            motor4 = Integer.parseInt(motor4_speed.getText().toString());
+        }
+        if (Misc.check_speed_valid(Integer.parseInt(motor5_speed.getText().toString()))) {
+            motor5 = Integer.parseInt(motor5_speed.getText().toString());
+        }
+        if (Misc.check_speed_valid(Integer.parseInt(motor6_speed.getText().toString()))) {
+            motor6 = Integer.parseInt(motor6_speed.getText().toString());
+        }
         ctl_msg = Integer.toString(motor1) + "+" + Integer.toString(motor2) + "+" +
                 Integer.toString(motor3) + "+" + Integer.toString(motor4) + "+" +
                 Integer.toString(motor5) + "+" + Integer.toString(motor6) + "+" +
