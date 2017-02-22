@@ -1,208 +1,213 @@
 package org.icenter.mqtt_car;
 
-import android.content.Intent;
 import android.net.Uri;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
+import android.os.Handler;
+import android.support.v7.app.AlertDialog;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.AppCompatButton;
+import android.support.v7.widget.AppCompatCheckBox;
+import android.support.v7.widget.AppCompatEditText;
+import android.support.v7.widget.Toolbar;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
-import android.widget.Button;
-import android.widget.EditText;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.google.android.gms.appindexing.Action;
 import com.google.android.gms.appindexing.AppIndex;
 import com.google.android.gms.common.api.GoogleApiClient;
 
-import org.eclipse.paho.android.service.MqttAndroidClient;
-import org.eclipse.paho.client.mqttv3.IMqttActionListener;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
-import org.eclipse.paho.client.mqttv3.IMqttToken;
-import org.eclipse.paho.client.mqttv3.MqttCallback;
-import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.ArrayList;
+import java.util.List;
 
+/**
+ * Created by mitsuki on 2016/12/20.
+ */
 public class MainActivity extends AppCompatActivity {
+    private static final String TAG = "MainActivity";
 
+    private class MotorRowViewHolder {
+        private AppCompatCheckBox checkBox;
+        private TextView textView;
+        private AppCompatEditText editText;
+        private AppCompatButton button;
 
-    // UI compoments
-    private TextView r_val;
-    private TextView g_val;
-    private TextView b_val;
-    private TextView network_status;
-    private EditText mqtt_server_addr;
-    private EditText motor1_speed;
-    private EditText motor2_speed;
-    private EditText motor3_speed;
-    private EditText motor4_speed;
-    private EditText motor5_speed;
-    private EditText motor6_speed;
-    private Button connect;
-    private Button motor1_send;
-    private Button motor2_send;
-    private Button motor3_send;
-    private Button motor4_send;
-    private Button motor5_send;
-    private Button motor6_send;
+        public MotorRowViewHolder(AppCompatCheckBox checkBox, TextView textView, AppCompatEditText editText, AppCompatButton button) {
+            this.checkBox = checkBox;
+            this.textView = textView;
+            this.editText = editText;
+            this.button = button;
+        }
+    }
 
-    private int motor1 = 0;
-    private int motor2 = 0;
-    private int motor3 = 0;
-    private int motor4 = 0;
-    private int motor5 = 0;
-    private int motor6 = 0;
-
-    MqttAndroidClient _client;
     /**
      * ATTENTION: This was auto-generated to implement the App Indexing API.
      * See https://g.co/AppIndexing/AndroidStudio for more information.
      */
-    private GoogleApiClient client2;
+    private GoogleApiClient googleApiClient;
+
+    private List<View> motorRootViews = new ArrayList<>();
+    private List<MotorRowViewHolder> motorRowViewHolders = new ArrayList<>();
+
+    private View allMotorRootView;
+    private MotorRowViewHolder allMotorRowViewHolder;
+
+    private TextView receivedMessageTextView;
+    private TextView connectionStatusTextView;
+    private TextView sentMessageTextView;
+
+    private AppCompatButton stopButton;
+
+    private AlertDialog dialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // get UI compoments
-        r_val = (TextView) findViewById(R.id.R_val);
-        g_val = (TextView) findViewById(R.id.G_val);
-        b_val = (TextView) findViewById(R.id.B_val);
-        network_status = (TextView) findViewById(R.id.status);
-        mqtt_server_addr = (EditText) findViewById(R.id.mqtt_server);
-        motor1_speed = (EditText) findViewById(R.id.motor1);
-        motor2_speed = (EditText) findViewById(R.id.motor2);
-        motor3_speed = (EditText) findViewById(R.id.motor3);
-        motor4_speed = (EditText) findViewById(R.id.motor4);
-        motor5_speed = (EditText) findViewById(R.id.motor5);
-        motor6_speed = (EditText) findViewById(R.id.motor6);
-        connect = (Button) findViewById(R.id.connect);
-        motor1_send = (Button) findViewById(R.id.button1);
-        motor2_send = (Button) findViewById(R.id.button2);
-        motor3_send = (Button) findViewById(R.id.button3);
-        motor4_send = (Button) findViewById(R.id.button4);
-        motor5_send = (Button) findViewById(R.id.button5);
-        motor6_send = (Button) findViewById(R.id.button6);
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        getSupportActionBar().setTitle(R.string.app_name);
 
-        network_status.setText(R.string.disconnected_status);
-        // setup client callback
-        _client.setCallback(new MqttCallback() {
+        motorRootViews.add(findViewById(R.id.motor1));
+        motorRootViews.add(findViewById(R.id.motor2));
+        motorRootViews.add(findViewById(R.id.motor3));
+        motorRootViews.add(findViewById(R.id.motor4));
+        motorRootViews.add(findViewById(R.id.motor5));
+        motorRootViews.add(findViewById(R.id.motor6));
 
+        for (int i = 0; i < motorRootViews.size(); i++) {
+            View view = motorRootViews.get(i);
+
+            MotorRowViewHolder holder = new MotorRowViewHolder(
+                    (AppCompatCheckBox) view.findViewById(R.id.motor_check_box),
+                    (TextView) view.findViewById(R.id.motor_title_text),
+                    (AppCompatEditText) view.findViewById(R.id.motor_edit_text),
+                    (AppCompatButton) view.findViewById(R.id.motor_publish_button));
+
+            holder.textView.setText(getString(R.string.motor_num, String.valueOf(i + 1)));
+            holder.button.setVisibility(View.GONE);
+
+            motorRowViewHolders.add(holder);
+        }
+
+        allMotorRootView = findViewById(R.id.motor_all);
+        allMotorRowViewHolder = new MotorRowViewHolder(
+                (AppCompatCheckBox) allMotorRootView.findViewById(R.id.motor_check_box),
+                (TextView) allMotorRootView.findViewById(R.id.motor_title_text),
+                (AppCompatEditText) allMotorRootView.findViewById(R.id.motor_edit_text),
+                (AppCompatButton) allMotorRootView.findViewById(R.id.motor_publish_button));
+        allMotorRowViewHolder.checkBox.setVisibility(View.GONE);
+        allMotorRowViewHolder.textView.setText(getString(R.string.motor_all));
+        allMotorRowViewHolder.button.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void connectionLost(Throwable cause) {
-                Log.i("[DBG]", "mqtt lost!");
-                Toast.makeText(getApplicationContext(), "connect loss!", Toast.LENGTH_SHORT).show();
-                network_status.setText(R.string.disconnected_status);
-            }
-
-            @Override
-            public void messageArrived(String topic, MqttMessage message) throws Exception {
-                Log.i("[DBG]", "Incomming msg!");
-                if (topic.equals(getString(R.string.color_topic))) {
-                    Pattern p = Pattern.compile("(\\d+)(\\d+)(\\d+)");
-                    Matcher m = p.matcher(message.toString());
-                    r_val.setText(m.group(1));
-                    g_val.setText(m.group(2));
-                    b_val.setText(m.group(3));
-                    Log.i("[DBG]", "get RBG:" + m.group(1) + " " + m.group(2) + " " + m.group(3));
+            public void onClick(View v) {
+                List<Integer> list = new ArrayList<>();
+                for (MotorRowViewHolder holder : motorRowViewHolders) {
+                    list.add(parseInt(holder.checkBox.isChecked() ?
+                            allMotorRowViewHolder.editText.getText().toString() : holder.editText.getText().toString(),
+                            MqttClientManager.MOTOR_MIN_SPEED, MqttClientManager.MOTOR_MAX_SPEED));
                 }
-            }
-
-            @Override
-            public void deliveryComplete(IMqttDeliveryToken token) {
-                Log.i("[DBG]", "transport success!");
+                MqttClientManager.getInstance().publishMessage(MqttClientManager.MOTOR_TOPIC, list);
             }
         });
 
-        // setup button onclick listener
-        connect.setOnClickListener(new View.OnClickListener() {
+        connectionStatusTextView = (TextView) findViewById(R.id.connection_status);
+        receivedMessageTextView = (TextView) findViewById(R.id.received_message);
+        sentMessageTextView = (TextView) findViewById(R.id.sent_message);
+
+        stopButton = (AppCompatButton) findViewById(R.id.stop_button);
+
+        stopButton.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View view) {
-                // check input
-                String server_uri;
-                if (mqtt_server_addr.getText().length() == 0 ||
-                        !Misc.check_addr_valid(mqtt_server_addr.getText().toString())) {  // null string input
-                    server_uri = "tcp://" + R.string.default_addr + ":" + R.string.default_port;
-                    Log.i("[DBG]", "connect to " + server_uri);
-                    _client = new MqttAndroidClient(getApplicationContext(), server_uri, getString(R.string.mqtt_client_id));
-                } else {
-                    server_uri = "tcp://" + mqtt_server_addr.getText().toString() + ":" + R.string.default_port;
-                    Log.i("[DBG]", "connect to " + server_uri);
-                    _client = new MqttAndroidClient(getApplicationContext(), server_uri, getString(R.string.mqtt_client_id));
-                }
-                network_status.setText(R.string.connected_status);
-                // subscribe colorx
-                subscribeToTopic(getString(R.string.color_topic),_client);
+            public void onClick(View v) {
+                MqttClientManager.getInstance().publishMessage(MqttClientManager.MOTOR_TOPIC, "0+0+0+0+0+0");
             }
         });
 
-        motor1_send.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if (Misc.check_speed_valid(Integer.parseInt(motor1_speed.getText().toString()))) {
-                    motor1 = Integer.parseInt(motor1_speed.getText().toString());
-                    do_motor_ctl(_client);
-                }
-            }
-        });
+        connectionStatusTextView.setText(MqttClientManager.getInstance().isConnected() ?
+                getString(R.string.connected_status) : getString(R.string.disconnected_status));
 
-        motor2_send.setOnClickListener(new View.OnClickListener() {
+        MqttClientManager.getInstance().setMqttClientListener(new Handler(), new MqttClientManager.MqttClientListener() {
             @Override
-            public void onClick(View view) {
-                if (Misc.check_speed_valid(Integer.parseInt(motor2_speed.getText().toString()))) {
-                    motor2 = Integer.parseInt(motor2_speed.getText().toString());
-                    do_motor_ctl(_client);
-                }
+            public void onMessageArrived(String topic, MqttMessage message) {
+                receivedMessageTextView.setText(getString(R.string.received_message, topic, message.toString()));
             }
-        });
 
-        motor3_send.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View view) {
-                if (Misc.check_speed_valid(Integer.parseInt(motor3_speed.getText().toString()))) {
-                    motor3 = Integer.parseInt(motor3_speed.getText().toString());
-                    do_motor_ctl(_client);
-                }
+            public void onDeliveryCompleted(IMqttDeliveryToken token) {
+                sentMessageTextView.setText(getString(R.string.sent_message_completed, token.getMessageId()));
             }
-        });
 
-        motor4_send.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View view) {
-                if (Misc.check_speed_valid(Integer.parseInt(motor4_speed.getText().toString()))) {
-                    motor4 = Integer.parseInt(motor4_speed.getText().toString());
-                    do_motor_ctl(_client);
-                }
+            public void onDeliveryFailed() {
+                sentMessageTextView.setText(getString(R.string.sent_message_failed));
             }
-        });
 
-        motor5_send.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View view) {
-                if (Misc.check_speed_valid(Integer.parseInt(motor5_speed.getText().toString()))) {
-                    motor5 = Integer.parseInt(motor5_speed.getText().toString());
-                    do_motor_ctl(_client);
-                }
+            public void onConnected() {
+                connectionStatusTextView.setText(getString(R.string.connected_status));
             }
-        });
 
-        motor6_send.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View view) {
-                if (Misc.check_speed_valid(Integer.parseInt(motor6_speed.getText().toString()))) {
-                    motor6 = Integer.parseInt(motor6_speed.getText().toString());
-                    do_motor_ctl(_client);
-                }
+            public void onConnectionLost() {
+                connectionStatusTextView.setText(getString(R.string.disconnected_status));
             }
         });
 
         // ATTENTION: This was auto-generated to implement the App Indexing API.
         // See https://g.co/AppIndexing/AndroidStudio for more information.
-        client2 = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
+        googleApiClient = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
+    }
+
+    public int parseInt(String string, int min, int max) {
+        try {
+            int value = Integer.valueOf(string);
+            if (value < min) {
+                value = min;
+            }
+            if (value > max) {
+                value = max;
+            }
+            return value;
+        } catch (NumberFormatException e) {
+            // do nothing
+        }
+        return 0;
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater menuInflater = getMenuInflater();
+        menuInflater.inflate(R.menu.main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case (R.id.action_help):
+
+                dialog = new AlertDialog.Builder(this).setTitle("帮助").setMessage("自动连接和断线重连, 点击Publish之后会将勾选的马达按照Publish这一行的数值发送, 其他的按照原先的数值发送; 下面的3行状态依次为连接状态、收到的消息、发送的消息; Stop是停止, 也就是发送\"0+0+0+0+0+0\"").setCancelable(true).create();
+                dialog.show();
+
+                return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        if (dialog != null) {
+            dialog.dismiss();
+        }
     }
 
     @Override
@@ -211,7 +216,7 @@ public class MainActivity extends AppCompatActivity {
 
         // ATTENTION: This was auto-generated to implement the App Indexing API.
         // See https://g.co/AppIndexing/AndroidStudio for more information.
-        client2.connect();
+        googleApiClient.connect();
         Action viewAction = Action.newAction(
                 Action.TYPE_VIEW, // TODO: choose an action type.
                 "Main Page", // TODO: Define a title for the content shown.
@@ -222,7 +227,7 @@ public class MainActivity extends AppCompatActivity {
                 // TODO: Make sure this auto-generated app URL is correct.
                 Uri.parse("android-app://org.icenter.mqtt_car/http/host/path")
         );
-        AppIndex.AppIndexApi.start(client2, viewAction);
+        AppIndex.AppIndexApi.start(googleApiClient, viewAction);
     }
 
     @Override
@@ -241,71 +246,7 @@ public class MainActivity extends AppCompatActivity {
                 // TODO: Make sure this auto-generated app URL is correct.
                 Uri.parse("android-app://org.icenter.mqtt_car/http/host/path")
         );
-        AppIndex.AppIndexApi.end(client2, viewAction);
-        client2.disconnect();
-    }
-
-    // user functions
-    public void subscribeToTopic (String topic, MqttAndroidClient client) {
-        try {
-            if (client == null) {
-                Toast.makeText(MainActivity.this, "not connect yet!",Toast.LENGTH_SHORT).show();
-                return;
-            }
-            if (!client.isConnected()) {
-                Toast.makeText(MainActivity.this, "not connect yet!",Toast.LENGTH_SHORT).show();
-                return;
-            }
-            client.subscribe(topic, 0, null, new IMqttActionListener() {
-                @Override
-                public void onSuccess(IMqttToken asyncActionToken) {
-                    Toast.makeText(MainActivity.this, "Subscribed!", Toast.LENGTH_SHORT).show();
-                }
-
-                @Override
-                public void onFailure(IMqttToken asyncActionToken, Throwable exception) {
-                    Toast.makeText(MainActivity.this, "Subscribe Failed!", Toast.LENGTH_SHORT).show();
-                }
-            });
-        } catch (MqttException ex) {
-            System.err.println("Exception whilst subscribing");
-            ex.printStackTrace();
-        }
-    }
-
-    public void publishMessage (String topic, String content, MqttAndroidClient client) {
-
-        try {
-            MqttMessage message = new MqttMessage();
-            message.setPayload(content.getBytes());
-            if (client == null) {
-                Toast.makeText(MainActivity.this, "not connect yet!",Toast.LENGTH_SHORT).show();
-                return;
-            }
-            if (!client.isConnected()) {
-                Toast.makeText(MainActivity.this, "not connect yet!",Toast.LENGTH_SHORT).show();
-                return;
-            }
-            client.publish(topic, message);
-            Toast.makeText(getApplicationContext(), "publish success!", Toast.LENGTH_SHORT).show();
-            Log.i("[DBG]","Message Published");
-            if (!client.isConnected()) {
-                //addToHistory(client.getBufferedMessageCount() + " messages in buffer.");
-                Log.i("[DBG]","add to buffer!");
-            }
-        } catch (MqttException e) {
-            System.err.println("Error Publishing: " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
-
-    public void do_motor_ctl(MqttAndroidClient client) {
-        String ctl_msg;
-        ctl_msg = Integer.toString(motor1) + "+" + Integer.toString(motor2) + "+" +
-                Integer.toString(motor3) + "+" + Integer.toString(motor4) + "+" +
-                Integer.toString(motor5) + "+" + Integer.toString(motor6) + "+" +
-                Integer.toString(motor5) + "+" + Integer.toString(motor6);
-        Log.i("[DBG]", "send: " + ctl_msg);
-        publishMessage(getString(R.string.motor_topic) ,ctl_msg, client);
+        AppIndex.AppIndexApi.end(googleApiClient, viewAction);
+        googleApiClient.disconnect();
     }
 }

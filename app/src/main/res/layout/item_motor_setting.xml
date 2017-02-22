@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <android.support.v7.widget.AppCompatCheckBox
+        android:id="@+id/motor_check_box"
+        android:layout_marginLeft="8dp"
+        android:layout_centerVertical="true"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"/>
+
+    <TextView
+        android:id="@+id/motor_title_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_toRightOf="@id/motor_check_box"
+        android:layout_centerVertical="true"
+        android:layout_marginLeft="8dp"
+        android:text="@string/motor_num"
+        android:textSize="16sp" />
+
+    <android.support.v7.widget.AppCompatButton
+        android:id="@+id/motor_publish_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
+        android:layout_centerVertical="true"
+        android:layout_marginLeft="16dp"
+        android:layout_marginRight="16dp"
+        android:text="@string/publish" />
+
+    <android.support.v7.widget.AppCompatEditText
+        android:id="@+id/motor_edit_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_marginLeft="16dp"
+        android:layout_toLeftOf="@id/motor_publish_button"
+        android:layout_toRightOf="@id/motor_title_text"
+        android:enabled="true"
+        android:hint="@string/motor_input_hint"
+        android:inputType="numberSigned"
+        android:selectAllOnFocus="true"
+        android:textStyle="bold" />
+
+</RelativeLayout>

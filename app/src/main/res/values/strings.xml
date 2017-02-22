@@ -6,7 +6,18 @@
     <string name="default_port">1883</string>
     <string name="mqtt_client_id">iotcar</string>
     <string name="color_topic">/iot-car/icenter/colorx</string>
-    <string name="motor_topic">/control/iot-car/123</string>
+    <string name="motor_topic">/control/iotcar/123</string>
     <string name="connected_status">connected</string>
     <string name="disconnected_status">disconnected</string>
+
+    <string name="motor_input_hint">-100~100</string>
+    <string name="publish">Publish</string>
+    <string name="publish_all">PublishAll</string>
+    <string name="motor_num">Motor%s</string>
+    <string name="motor_all">MotorSelected</string>
+    <string name="received_message">received: topic = %1$s, message = %2$s</string>
+    <string name="sent_message_completed">delivery completed, messageId = %d</string>
+    <string name="sent_message_failed">delivery failed</string>
+    <string name="action_help">help me</string>
+    <string name="stop">stop</string>
 </resources>
